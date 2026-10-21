@@ -2,6 +2,7 @@
 
 ## 1. Project Identity
 - **Name:** EveryGyan
+- **Repository:** `https://github.com/everygyan/Everygyan-GEM`
 - **Pillars:**
   1. **Blog:** Modern engineering, thoughts, architecture, and technology reviews.
   2. **Learning:** Interactive and progressive learning roadmaps, tutorials, and practical developer tracks.

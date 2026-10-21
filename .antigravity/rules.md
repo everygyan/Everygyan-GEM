@@ -2,6 +2,7 @@
 
 ## 1. Project Overview
 - **Project Name:** EveryGyan
+- **GitHub Repository:** `https://github.com/everygyan/Everygyan-GEM`
 - **Vision:** High-performance unified portal offering deep knowledge across three core pillars:
   - **Blog:** Tech insights, architectural deep dives, editorial opinions.
   - **Learning:** Structured tutorials, tracks, and hands-on developer guides.
