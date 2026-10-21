@@ -4,42 +4,14 @@
 -- Idempotent Migration: Safe to run repeatedly in Supabase SQL Editor
 -- ==============================================================================
 
+-- ==============================================================================
 -- 1. EXTENSIONS
+-- ==============================================================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ==============================================================================
--- 2. ENUM / TYPE DEFINITIONS & HELPER FUNCTIONS
--- ==============================================================================
-
--- Function to check if the executing user has the 'admin' role
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.profiles
-    WHERE id = auth.uid()
-      AND role = 'admin'
-  );
-$$;
-
--- Function to automatically set updated_at on record changes
-CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$;
-
--- ==============================================================================
--- 3. CORE TABLES
+-- 2. CORE TABLES (Created first to satisfy foreign keys & function dependencies)
 -- ==============================================================================
 
 -- Table 1: PROFILES (User Profiles linked to auth.users)
@@ -129,7 +101,7 @@ CREATE TABLE IF NOT EXISTS public.api_keys (
 );
 
 -- ==============================================================================
--- 4. INDEXES FOR HIGH-PERFORMANCE QUERYING
+-- 3. INDEXES FOR HIGH-PERFORMANCE QUERYING
 -- ==============================================================================
 CREATE INDEX IF NOT EXISTS idx_posts_status_published ON public.posts(status) WHERE status = 'published';
 CREATE INDEX IF NOT EXISTS idx_posts_category ON public.posts(category);
@@ -142,8 +114,36 @@ CREATE INDEX IF NOT EXISTS idx_subscribers_email ON public.subscribers(email);
 CREATE INDEX IF NOT EXISTS idx_newsletters_status ON public.newsletters(status);
 
 -- ==============================================================================
--- 5. TRIGGERS
+-- 4. FUNCTIONS & TRIGGERS
 -- ==============================================================================
+
+-- Function to check if the executing user has the 'admin' role
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+STABLE
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
+      AND role = 'admin'
+  );
+END;
+$$;
+
+-- Function to automatically set updated_at on record changes
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
 
 -- Trigger to update updated_at on posts
 DROP TRIGGER IF EXISTS trg_posts_updated_at ON public.posts;
@@ -183,7 +183,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
--- Trigger to increment post view count securely
+-- Helper Function to increment post view count securely
 CREATE OR REPLACE FUNCTION public.increment_post_view(post_slug TEXT)
 RETURNS VOID
 LANGUAGE sql
@@ -195,7 +195,7 @@ AS $$
 $$;
 
 -- ==============================================================================
--- 6. ROW-LEVEL SECURITY (RLS) POLICIES
+-- 5. ROW-LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
 
 -- Enable RLS across all tables
