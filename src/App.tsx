@@ -23,6 +23,7 @@ import { AdminPosts } from './pages/admin/AdminPosts'
 import { AdminPostEditor } from './pages/admin/AdminPostEditor'
 import { AdminComments } from './pages/admin/AdminComments'
 import { AdminNewsletters } from './pages/admin/AdminNewsletters'
+import { AdminIntegrations } from './pages/admin/AdminIntegrations'
 
 function AppLayout() {
   const location = useLocation()
@@ -68,6 +69,7 @@ function AppLayout() {
             <Route path="posts/edit/:id" element={<AdminPostEditor />} />
             <Route path="comments" element={<AdminComments />} />
             <Route path="newsletters" element={<AdminNewsletters />} />
+            <Route path="integrations" element={<AdminIntegrations />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

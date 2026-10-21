@@ -60,6 +60,7 @@ describe('Phase 5: Protected Admin Command Center', () => {
         expect(screen.getAllByText(/Write New Post/i)[0]).toBeInTheDocument()
         expect(screen.getAllByText(/Comment Moderation/i)[0]).toBeInTheDocument()
         expect(screen.getAllByText(/Newsletter & Subscribers/i)[0]).toBeInTheDocument()
+        expect(screen.getAllByText(/n8n & Automations/i)[0]).toBeInTheDocument()
         expect(screen.getByText('Dashboard Child')).toBeInTheDocument()
       },
       { timeout: 3000 }

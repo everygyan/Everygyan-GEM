@@ -6,6 +6,7 @@ import {
   PlusCircle,
   MessageSquare,
   Mail,
+  Webhook,
   ArrowLeft,
   Menu,
   X,
@@ -29,6 +30,7 @@ export const AdminLayout: React.FC = () => {
     { name: 'Write New Post', path: '/admin/posts/new', icon: PlusCircle },
     { name: 'Comment Moderation', path: '/admin/comments', icon: MessageSquare },
     { name: 'Newsletter & Subscribers', path: '/admin/newsletters', icon: Mail },
+    { name: 'n8n & Automations', path: '/admin/integrations', icon: Webhook },
   ]
 
   const isLinkActive = (path: string, exact?: boolean) => {
