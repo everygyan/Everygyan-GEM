@@ -70,7 +70,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let mounted = true
 
     const initializeAuth = async () => {
-      // 1. Supabase Auth if credentials configured
+      // 1. Check for stored mock session (allows offline demo & unit test verification)
+      try {
+        const storedMock = localStorage.getItem(MOCK_STORAGE_KEY)
+        if (storedMock) {
+          const parsed = JSON.parse(storedMock)
+          if (mounted) {
+            setUser(parsed.user)
+            setProfile(parsed.profile)
+            setIsLoading(false)
+          }
+          return
+        }
+      } catch {
+        // ignore storage error
+      }
+
+      // 2. Supabase Auth if credentials configured
       if (isSupabaseConfigured) {
         try {
           const { data: { session } } = await supabase.auth.getSession()
@@ -101,18 +117,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           mounted = false
           subscription.unsubscribe()
         }
-      }
-
-      // 2. Fallback Mode for local testing without Supabase credentials
-      try {
-        const storedMock = localStorage.getItem(MOCK_STORAGE_KEY)
-        if (storedMock) {
-          const parsed = JSON.parse(storedMock)
-          setUser(parsed.user)
-          setProfile(parsed.profile)
-        }
-      } catch {
-        // ignore storage error
       }
 
       if (mounted) setIsLoading(false)

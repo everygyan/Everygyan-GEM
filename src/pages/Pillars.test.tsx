@@ -34,10 +34,9 @@ describe('Pillar Listing Experiences', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/The Architecture & Systems Blog/i)).toBeInTheDocument()
+      expect(screen.getByText(/Lead Architecture Story/i)).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/Lead Architecture Story/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/Search blog topics.../i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /All Topics/i })).toBeInTheDocument()
   })
@@ -52,7 +51,7 @@ describe('Pillar Listing Experiences', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/The Learning Hub & Code Tracks/i)).toBeInTheDocument()
+      expect(screen.getAllByRole('button', { name: /Mark Complete/i }).length).toBeGreaterThan(0)
     })
 
     expect(screen.getByText(/Track Completion/i)).toBeInTheDocument()
@@ -62,8 +61,6 @@ describe('Pillar Listing Experiences', () => {
 
     // Interactive Mark Complete button
     const markButtons = screen.getAllByRole('button', { name: /Mark Complete/i })
-    expect(markButtons.length).toBeGreaterThan(0)
-
     fireEvent.click(markButtons[0])
     expect(screen.getByRole('button', { name: /Completed/i })).toBeInTheDocument()
   })

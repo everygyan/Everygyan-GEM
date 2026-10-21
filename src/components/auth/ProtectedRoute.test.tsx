@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '../../context/AuthContext'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -14,7 +14,7 @@ describe('ProtectedRoute Component', () => {
     vi.restoreAllMocks()
   })
 
-  it('redirects unauthenticated visitors to /login', () => {
+  it('redirects unauthenticated visitors to /login', async () => {
     render(
       <AuthProvider>
         <MemoryRouter initialEntries={['/admin']}>
@@ -33,11 +33,13 @@ describe('ProtectedRoute Component', () => {
       </AuthProvider>
     )
 
-    expect(screen.getByText('Login Screen')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Login Screen')).toBeInTheDocument()
+    })
     expect(screen.queryByText('Welcome to Super Admin Dashboard')).toBeNull()
   })
 
-  it('blocks non-admin authenticated users from /admin and displays Access Denied', () => {
+  it('blocks non-admin authenticated users from /admin and displays Access Denied', async () => {
     // Set mock standard reader session
     localStorage.setItem(
       'everygyan_mock_session',
@@ -64,12 +66,14 @@ describe('ProtectedRoute Component', () => {
       </AuthProvider>
     )
 
-    expect(screen.getByText('Access Denied')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Access Denied')).toBeInTheDocument()
+    })
     expect(screen.getByText(/Administrator privileges are required/i)).toBeInTheDocument()
     expect(screen.queryByText('Welcome to Super Admin Dashboard')).toBeNull()
   })
 
-  it('allows authenticated standard users to view standard protected route /profile', () => {
+  it('allows authenticated standard users to view standard protected route /profile', async () => {
     localStorage.setItem(
       'everygyan_mock_session',
       JSON.stringify({
@@ -95,10 +99,12 @@ describe('ProtectedRoute Component', () => {
       </AuthProvider>
     )
 
-    expect(screen.getByText('Welcome to User Profile')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Welcome to User Profile')).toBeInTheDocument()
+    })
   })
 
-  it('allows admin users with role=admin to access /admin', () => {
+  it('allows admin users with role=admin to access /admin', async () => {
     // Set mock admin session
     localStorage.setItem(
       'everygyan_mock_session',
@@ -125,6 +131,8 @@ describe('ProtectedRoute Component', () => {
       </AuthProvider>
     )
 
-    expect(screen.getByText('Welcome to Super Admin Dashboard')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Welcome to Super Admin Dashboard')).toBeInTheDocument()
+    })
   })
 })
