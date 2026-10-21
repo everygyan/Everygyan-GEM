@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
@@ -17,11 +17,15 @@ import {
   ArrowRight,
   Layers,
   Award,
+  Bookmark,
 } from 'lucide-react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { useAuth } from '../context/AuthContext'
 import { postService } from '../services/postService'
+import { bookmarkService } from '../services/bookmarkService'
+import { CommentSection } from '../components/comments/CommentSection'
 import type { Post } from '../types'
 
 interface TocItem {
@@ -56,12 +60,16 @@ const WhatsAppIcon: React.FC<{ className?: string }> = ({ className = 'h-4 w-4' 
 
 export const PostDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
+  const { user, isAuthenticated } = useAuth()
   const [post, setPost] = useState<Post | null>(null)
   const [relatedPosts, setRelatedPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedLink, setCopiedLink] = useState(false)
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null)
   const [scrollProgress, setScrollProgress] = useState(0)
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [bookmarkFeedback, setBookmarkFeedback] = useState<string | null>(null)
 
   // Typography Preferences
   const [fontFamily, setFontFamily] = useState<'serif' | 'sans'>('serif')
@@ -73,7 +81,7 @@ export const PostDetail: React.FC = () => {
       loadPost(slug)
       window.scrollTo(0, 0)
     }
-  }, [slug])
+  }, [slug, user?.id])
 
   // Scroll Progress Listener
   useEffect(() => {
@@ -99,10 +107,28 @@ export const PostDetail: React.FC = () => {
           postService.incrementViewCount(postSlug),
         ])
         setRelatedPosts(related)
+
+        if (user) {
+          const bookmarked = await bookmarkService.isBookmarked(user.id, data.id)
+          setIsBookmarked(bookmarked)
+        }
       }
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleToggleBookmark = async () => {
+    if (!isAuthenticated || !user) {
+      navigate('/login')
+      return
+    }
+    if (!post) return
+
+    const res = await bookmarkService.toggleBookmark(user.id, post.id)
+    setIsBookmarked(res.isBookmarked)
+    setBookmarkFeedback(res.isBookmarked ? 'Saved to reading list!' : 'Removed from reading list.')
+    setTimeout(() => setBookmarkFeedback(null), 2500)
   }
 
   // Extract Table of Contents from Markdown headings
@@ -263,7 +289,7 @@ export const PostDetail: React.FC = () => {
           <Badge variant={post.pillar} size="md" dot>
             {post.pillar}
           </Badge>
-          <div className="flex items-center gap-4 text-xs text-foreground-muted">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-foreground-muted">
             <span className="flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" />
               {post.publishedAt}
@@ -276,6 +302,18 @@ export const PostDetail: React.FC = () => {
               <Eye className="h-3.5 w-3.5" />
               {post.views} views
             </span>
+            <button
+              onClick={handleToggleBookmark}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-semibold transition-all cursor-pointer shadow-2xs ${
+                isBookmarked
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
+                  : 'border-border bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-subtle'
+              }`}
+              title={isBookmarked ? 'Remove from bookmarks' : 'Save to bookmarks'}
+            >
+              <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-current text-indigo-600 dark:text-indigo-400' : ''}`} />
+              <span>{isBookmarked ? 'Saved' : 'Save'}</span>
+            </button>
           </div>
         </div>
 
@@ -549,9 +587,20 @@ export const PostDetail: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Social Share Buttons */}
+                {/* Social Share & Action Buttons */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-foreground-muted mr-1">Share:</span>
+                  <button
+                    onClick={handleToggleBookmark}
+                    className={`rounded-xl border p-2 transition-colors cursor-pointer shadow-2xs ${
+                      isBookmarked
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400'
+                        : 'border-border text-foreground-muted hover:bg-surface-subtle hover:text-foreground'
+                    }`}
+                    title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Article'}
+                  >
+                    <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                  </button>
                   <button
                     onClick={copyToClipboard}
                     className="rounded-xl border border-border p-2 text-foreground-muted hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer shadow-2xs"
@@ -588,6 +637,19 @@ export const PostDetail: React.FC = () => {
                   </a>
                 </div>
               </div>
+
+              {bookmarkFeedback && (
+                <div className="mt-3 text-right text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                  {bookmarkFeedback}
+                </div>
+              )}
+
+              {/* 3. COMMUNITY COMMENTS & DISCUSSION */}
+              <CommentSection
+                postId={post.id}
+                postSlug={post.slug}
+                postAuthorName={post.author.name}
+              />
             </div>
           </main>
 

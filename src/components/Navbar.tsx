@@ -46,7 +46,7 @@ export const Navbar: React.FC = () => {
     { name: 'Blog', path: '/blog', badge: 'Tech & Architecture', color: 'text-indigo-500' },
     { name: 'Learning', path: '/learning', badge: 'Roadmaps & Code', color: 'text-emerald-500' },
     { name: 'Travel', path: '/travel', badge: 'Itineraries', color: 'text-amber-500' },
-    { name: 'Newsletter', path: '#newsletter' },
+    { name: 'Newsletter', path: '/newsletter', badge: 'Weekly Dispatch', color: 'text-indigo-400' },
   ]
 
   return (

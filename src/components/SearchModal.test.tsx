@@ -47,6 +47,10 @@ describe('SearchModal Component', () => {
       </MemoryRouter>
     )
 
+    await waitFor(() => {
+      expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
+    })
+
     const input = screen.getByPlaceholderText(/Search stories, learning tracks/i)
     fireEvent.change(input, { target: { value: 'Kyoto' } })
 

@@ -85,3 +85,61 @@ export interface UserProfile {
   bio?: string
   createdAt?: string
 }
+
+export interface CommentUser {
+  id: string
+  fullName: string
+  avatarUrl?: string
+  role?: 'user' | 'admin'
+}
+
+export interface Comment {
+  id: string
+  postId: string
+  userId: string
+  parentId: string | null
+  content: string
+  status: 'pending' | 'approved' | 'spam'
+  createdAt: string
+  user?: CommentUser
+  replies?: Comment[]
+  postTitle?: string
+  postSlug?: string
+}
+
+export interface Bookmark {
+  id: string
+  userId: string
+  postId: string
+  createdAt: string
+  post?: Post
+}
+
+export interface SubscriberPreferences {
+  blog: boolean
+  learning: boolean
+  travel: boolean
+}
+
+export interface Subscriber {
+  id: string
+  email: string
+  status: 'active' | 'unsubscribed'
+  preferences: SubscriberPreferences
+  source: string
+  createdAt: string
+}
+
+export interface Newsletter {
+  id: string
+  subject: string
+  previewText?: string
+  contentHtml?: string
+  contentMarkdown?: string
+  type: 'weekly_letter' | 'announcement'
+  status: 'draft' | 'scheduled' | 'sent'
+  sentCount: number
+  scheduledAt?: string
+  sentAt?: string
+  createdAt: string
+}

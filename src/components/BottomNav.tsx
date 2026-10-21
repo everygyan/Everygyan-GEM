@@ -58,8 +58,18 @@ export const BottomNav: React.FC = () => {
 
         {/* Saved */}
         <button
-          onClick={() => setIsSavedOpen(true)}
-          className="flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          onClick={() => {
+            if (isAuthenticated) {
+              navigate('/profile?tab=bookmarks')
+            } else {
+              setIsSavedOpen(true)
+            }
+          }}
+          className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-colors cursor-pointer ${
+            location.search.includes('tab=bookmarks')
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-foreground-muted hover:text-foreground'
+          }`}
         >
           <Bookmark className="h-5 w-5" />
           <span className="text-[10px]">Saved</span>

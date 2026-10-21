@@ -9,6 +9,7 @@ import { Blog } from './pages/Blog'
 import { Learning } from './pages/Learning'
 import { Travel } from './pages/Travel'
 import { PostDetail } from './pages/PostDetail'
+import { Newsletter } from './pages/Newsletter'
 import { Login } from './pages/Login'
 import { Signup } from './pages/Signup'
 import { Profile } from './pages/Profile'
@@ -31,6 +32,7 @@ export function App() {
                 <Route path="/learning" element={<Learning />} />
                 <Route path="/travel" element={<Travel />} />
                 <Route path="/post/:slug" element={<PostDetail />} />
+                <Route path="/newsletter" element={<Newsletter />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route

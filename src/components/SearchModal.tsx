@@ -15,6 +15,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const [selectedPillar, setSelectedPillar] = useState<'all' | PillarType>('all')
   const [results, setResults] = useState<Post[]>([])
   const [loading, setLoading] = useState(false)
+  const requestIdRef = React.useRef(0)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   }, [isOpen])
 
   const loadSearchResults = async (searchQuery: string, pillar: 'all' | PillarType) => {
+    const currentReq = ++requestIdRef.current
     setLoading(true)
     try {
       const response = await postService.getPosts({
@@ -37,9 +39,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
         pillar: pillar !== 'all' ? pillar : undefined,
         limit: 8,
       })
-      setResults(response.posts)
+      if (currentReq === requestIdRef.current) {
+        setResults(response.posts)
+      }
     } finally {
-      setLoading(false)
+      if (currentReq === requestIdRef.current) {
+        setLoading(false)
+      }
     }
   }
 

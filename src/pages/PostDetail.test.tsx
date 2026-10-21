@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '../context/ThemeContext'
+import { AuthProvider } from '../context/AuthContext'
 import { PostDetail } from './PostDetail'
 
 describe('PostDetail (Ultimate Article Reader)', () => {
@@ -31,11 +32,13 @@ describe('PostDetail (Ultimate Article Reader)', () => {
   it('renders Markdown content with GFM tables, code blocks, blockquotes, and images for blog article', async () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <MemoryRouter initialEntries={['/post/architectural-shift-edge-functions']}>
-          <Routes>
-            <Route path="/post/:slug" element={<PostDetail />} />
-          </Routes>
-        </MemoryRouter>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/post/architectural-shift-edge-functions']}>
+            <Routes>
+              <Route path="/post/:slug" element={<PostDetail />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -62,16 +65,21 @@ describe('PostDetail (Ultimate Article Reader)', () => {
 
     // Table of Contents on Desktop (heading and TOC link)
     expect(screen.getAllByText(/The Distributed Dilemma/i).length).toBeGreaterThan(1)
+
+    // Discussion Section is present
+    expect(screen.getByText(/Community Discussion/i)).toBeInTheDocument()
   })
 
   it('renders Learning Hub specialized callout box (Prerequisites & Key Takeaways)', async () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <MemoryRouter initialEntries={['/post/react-19-production-actions']}>
-          <Routes>
-            <Route path="/post/:slug" element={<PostDetail />} />
-          </Routes>
-        </MemoryRouter>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/post/react-19-production-actions']}>
+            <Routes>
+              <Route path="/post/:slug" element={<PostDetail />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -86,11 +94,13 @@ describe('PostDetail (Ultimate Article Reader)', () => {
   it('renders Travel specialized callout box (Trip Quick Facts & Itinerary Summary)', async () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <MemoryRouter initialEntries={['/post/kyoto-hidden-temples-guide']}>
-          <Routes>
-            <Route path="/post/:slug" element={<PostDetail />} />
-          </Routes>
-        </MemoryRouter>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/post/kyoto-hidden-temples-guide']}>
+            <Routes>
+              <Route path="/post/:slug" element={<PostDetail />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -106,11 +116,13 @@ describe('PostDetail (Ultimate Article Reader)', () => {
   it('toggles typography controls (Serif vs Sans and font sizes)', async () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <MemoryRouter initialEntries={['/post/architectural-shift-edge-functions']}>
-          <Routes>
-            <Route path="/post/:slug" element={<PostDetail />} />
-          </Routes>
-        </MemoryRouter>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/post/architectural-shift-edge-functions']}>
+            <Routes>
+              <Route path="/post/:slug" element={<PostDetail />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
