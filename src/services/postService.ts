@@ -448,8 +448,12 @@ function mapSupabasePostToFrontend(row: Record<string, unknown>): Post {
     coverImage: String(row.cover_image ?? row.coverImage ?? ''),
     metadata: (row.metadata as Record<string, unknown>) || {},
     featured: Boolean(row.featured),
+    status: (row.status as Post['status']) || 'published',
   }
 }
+
+const isUuid = (id?: string | null): boolean =>
+  Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
 
 export const postService = {
   /**
@@ -625,5 +629,221 @@ export const postService = {
     const tagsSet = new Set<string>()
     list.forEach((p) => p.tags.forEach((t) => tagsSet.add(t)))
     return Array.from(tagsSet)
+  },
+
+  /**
+   * Admin: Get all posts with status filters
+   */
+  async adminGetPosts(filter: { pillar?: PillarType | 'all'; status?: string; search?: string } = {}): Promise<Post[]> {
+    const { pillar = 'all', status = 'all', search } = filter
+
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabase
+          .from('posts')
+          .select('*, profiles(full_name, avatar_url, role, bio)')
+          .order('created_at', { ascending: false })
+
+        if (pillar && pillar !== 'all') {
+          query = query.eq('category', pillar)
+        }
+        if (status && status !== 'all') {
+          query = query.eq('status', status)
+        }
+        if (search) {
+          query = query.ilike('title', `%${search}%`)
+        }
+
+        const { data, error } = await query
+        if (!error && data && data.length > 0) {
+          return data.map((r) => mapSupabasePostToFrontend(r as Record<string, unknown>))
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    let list = [...FALLBACK_SEED_POSTS]
+    if (pillar && pillar !== 'all') {
+      list = list.filter((p) => p.pillar === pillar)
+    }
+    if (status && status !== 'all') {
+      list = list.filter((p) => (p.status || 'published') === status)
+    }
+    if (search && search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter((p) => p.title.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q)))
+    }
+    return list
+  },
+
+  /**
+   * Admin: Get post by ID
+   */
+  async getPostById(id: string): Promise<Post | null> {
+    if (isSupabaseConfigured && isUuid(id)) {
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*, profiles(full_name, avatar_url, role, bio)')
+          .eq('id', id)
+          .maybeSingle()
+
+        if (!error && data) {
+          return mapSupabasePostToFrontend(data as Record<string, unknown>)
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    const found = FALLBACK_SEED_POSTS.find((p) => p.id === id || p.slug === id)
+    return found ? { ...found } : null
+  },
+
+  /**
+   * Admin: Create post
+   */
+  async createPost(postData: Partial<Post>): Promise<{ post: Post | null; error: string | null }> {
+    const slug =
+      postData.slug ||
+      (postData.title || 'untitled')
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+
+    const newPost: Post = {
+      id: isUuid(postData.id) ? postData.id! : `post-${Date.now()}`,
+      slug,
+      title: postData.title || 'Untitled Post',
+      excerpt: postData.excerpt || '',
+      content: postData.content || '',
+      pillar: postData.pillar || 'blog',
+      tags: postData.tags || [],
+      author: postData.author || {
+        name: 'EveryGyan Staff',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        role: 'Administrator',
+      },
+      publishedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      readTime: postData.readTime || '5 min read',
+      views: 0,
+      coverImage:
+        postData.coverImage ||
+        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+      metadata: postData.metadata || {},
+      featured: Boolean(postData.featured),
+      status: postData.status || 'published',
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .insert({
+            title: newPost.title,
+            slug: newPost.slug,
+            excerpt: newPost.excerpt,
+            content: newPost.content,
+            category: newPost.pillar,
+            tags: newPost.tags,
+            cover_image: newPost.coverImage,
+            metadata: newPost.metadata,
+            status: newPost.status,
+            featured: newPost.featured,
+            reading_time_minutes: parseInt(newPost.readTime, 10) || 5,
+            published_at: newPost.status === 'published' ? new Date().toISOString() : null,
+          })
+          .select('*, profiles(full_name, avatar_url, role, bio)')
+          .single()
+
+        if (!error && data) {
+          const mapped = mapSupabasePostToFrontend(data as Record<string, unknown>)
+          FALLBACK_SEED_POSTS.unshift(mapped)
+          return { post: mapped, error: null }
+        }
+      } catch (err: unknown) {
+        return { post: null, error: (err as Error).message }
+      }
+    }
+
+    FALLBACK_SEED_POSTS.unshift(newPost)
+    return { post: newPost, error: null }
+  },
+
+  /**
+   * Admin: Update post
+   */
+  async updatePost(id: string, updates: Partial<Post>): Promise<{ success: boolean; error: string | null }> {
+    if (isSupabaseConfigured && isUuid(id)) {
+      try {
+        const payload: Record<string, unknown> = {}
+        if (updates.title) payload.title = updates.title
+        if (updates.slug) payload.slug = updates.slug
+        if (updates.excerpt !== undefined) payload.excerpt = updates.excerpt
+        if (updates.content !== undefined) payload.content = updates.content
+        if (updates.pillar) payload.category = updates.pillar
+        if (updates.tags) payload.tags = updates.tags
+        if (updates.coverImage !== undefined) payload.cover_image = updates.coverImage
+        if (updates.metadata) payload.metadata = updates.metadata
+        if (updates.status) {
+          payload.status = updates.status
+          if (updates.status === 'published') payload.published_at = new Date().toISOString()
+        }
+        if (updates.featured !== undefined) payload.featured = updates.featured
+        if (updates.readTime) payload.reading_time_minutes = parseInt(updates.readTime, 10) || 5
+
+        const { error } = await supabase.from('posts').update(payload).eq('id', id)
+        if (error) {
+          return { success: false, error: error.message }
+        }
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message }
+      }
+    }
+
+    const index = FALLBACK_SEED_POSTS.findIndex((p) => p.id === id)
+    if (index !== -1) {
+      FALLBACK_SEED_POSTS[index] = { ...FALLBACK_SEED_POSTS[index], ...updates }
+    }
+    return { success: true, error: null }
+  },
+
+  /**
+   * Admin: Delete post
+   */
+  async deletePost(id: string): Promise<{ success: boolean; error: string | null }> {
+    if (isSupabaseConfigured && isUuid(id)) {
+      try {
+        const { error } = await supabase.from('posts').delete().eq('id', id)
+        if (error) {
+          return { success: false, error: error.message }
+        }
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message }
+      }
+    }
+
+    const index = FALLBACK_SEED_POSTS.findIndex((p) => p.id === id)
+    if (index !== -1) {
+      FALLBACK_SEED_POSTS.splice(index, 1)
+    }
+    return { success: true, error: null }
+  },
+
+  /**
+   * Admin: Toggle publish status
+   */
+  async togglePublishStatus(id: string, newStatus: 'published' | 'draft'): Promise<boolean> {
+    const res = await this.updatePost(id, { status: newStatus })
+    return res.success
+  },
+
+  /**
+   * Admin: Toggle featured flag
+   */
+  async toggleFeatured(id: string, featured: boolean): Promise<boolean> {
+    const res = await this.updatePost(id, { featured })
+    return res.success
   },
 }

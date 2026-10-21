@@ -57,6 +57,7 @@ export interface Post {
   coverImage: string
   metadata?: PostMetadata
   featured?: boolean
+  status?: 'draft' | 'published' | 'archived'
 }
 
 export interface PostFilterParams {

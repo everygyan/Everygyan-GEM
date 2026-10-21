@@ -321,4 +321,88 @@ export const commentService = {
     const stored = getStoredComments()
     return stored.filter((c) => c.userId === userId)
   },
+
+  /**
+   * Admin: Get all comments with status and post information
+   */
+  async adminGetAllComments(filter: { status?: string; search?: string } = {}): Promise<Comment[]> {
+    const { status = 'all', search } = filter
+
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabase
+          .from('comments')
+          .select('*, profiles(id, full_name, avatar_url, role), posts(title, slug)')
+          .order('created_at', { ascending: false })
+
+        if (status && status !== 'all') {
+          query = query.eq('status', status)
+        }
+        if (search) {
+          query = query.ilike('content', `%${search}%`)
+        }
+
+        const { data, error } = await query
+        if (!error && data && data.length > 0) {
+          return data.map((row: Record<string, unknown>) => {
+            const profile = row.profiles as Record<string, unknown> | null
+            const post = row.posts as Record<string, unknown> | null
+            return {
+              id: String(row.id),
+              postId: String(row.post_id),
+              userId: String(row.user_id),
+              parentId: row.parent_id ? String(row.parent_id) : null,
+              content: String(row.content),
+              status: (row.status as 'pending' | 'approved' | 'spam') || 'approved',
+              createdAt: String(row.created_at),
+              user: {
+                id: String(row.user_id),
+                fullName: String(profile?.full_name || 'Community Member'),
+                avatarUrl: profile?.avatar_url ? String(profile.avatar_url) : undefined,
+                role: (profile?.role as 'user' | 'admin') || 'user',
+              },
+              postTitle: post?.title ? String(post.title) : 'Article',
+              postSlug: post?.slug ? String(post.slug) : '',
+            }
+          })
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    let all = getStoredComments()
+    if (status && status !== 'all') {
+      all = all.filter((c) => c.status === status)
+    }
+    if (search && search.trim()) {
+      const q = search.toLowerCase()
+      all = all.filter((c) => c.content.toLowerCase().includes(q))
+    }
+    return all
+  },
+
+  /**
+   * Admin: Update comment status (approve, spam, pending)
+   */
+  async adminUpdateCommentStatus(
+    commentId: string,
+    status: 'approved' | 'pending' | 'spam'
+  ): Promise<{ success: boolean; error: string | null }> {
+    if (isSupabaseConfigured && isUuid(commentId)) {
+      try {
+        const { error } = await supabase.from('comments').update({ status }).eq('id', commentId)
+        if (error) {
+          return { success: false, error: error.message }
+        }
+      } catch (err: unknown) {
+        return { success: false, error: (err as Error).message }
+      }
+    }
+
+    const stored = getStoredComments()
+    const updated = stored.map((c) => (c.id === commentId ? { ...c, status } : c))
+    saveStoredComments(updated)
+    return { success: true, error: null }
+  },
 }
