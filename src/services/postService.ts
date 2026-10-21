@@ -417,6 +417,40 @@ Renting a 4WD vehicle equipped with studded winter tires (piggdekk) is non-negot
   },
 ]
 
+function mapSupabasePostToFrontend(row: Record<string, unknown>): Post {
+  const profiles = row.profiles as Record<string, unknown> | null
+  return {
+    id: String(row.id),
+    slug: String(row.slug),
+    title: String(row.title),
+    excerpt: String(row.excerpt || ''),
+    content: String(row.content || ''),
+    pillar: (row.category || row.pillar || 'blog') as PillarType,
+    tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
+    author: {
+      name: String(profiles?.full_name || 'EveryGyan Editorial'),
+      avatar: String(
+        profiles?.avatar_url ||
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+      ),
+      role: String(profiles?.role || 'Staff Architect'),
+      bio: profiles?.bio ? String(profiles.bio) : undefined,
+    },
+    publishedAt: row.published_at
+      ? new Date(String(row.published_at)).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : 'Recently',
+    readTime: row.reading_time_minutes ? `${row.reading_time_minutes} min read` : '5 min read',
+    views: Number(row.views_count ?? row.views ?? 0),
+    coverImage: String(row.cover_image ?? row.coverImage ?? ''),
+    metadata: (row.metadata as Record<string, unknown>) || {},
+    featured: Boolean(row.featured),
+  }
+}
+
 export const postService = {
   /**
    * Fetch paginated and filtered posts
@@ -429,12 +463,12 @@ export const postService = {
       try {
         let query = supabase
           .from('posts')
-          .select('*', { count: 'exact' })
-          .eq('published', true)
+          .select('*, profiles(full_name, avatar_url, role, bio)', { count: 'exact' })
+          .eq('status', 'published')
           .order('created_at', { ascending: false })
 
         if (pillar && pillar !== 'all') {
-          query = query.eq('pillar', pillar)
+          query = query.eq('category', pillar)
         }
         if (tag) {
           query = query.contains('tags', [tag])
@@ -450,8 +484,9 @@ export const postService = {
         const { data, count, error } = await query
 
         if (!error && data && data.length > 0) {
+          const mappedPosts = data.map((r) => mapSupabasePostToFrontend(r as Record<string, unknown>))
           return {
-            posts: data as Post[],
+            posts: mappedPosts,
             total: count ?? data.length,
             page,
             limit,
@@ -512,12 +547,13 @@ export const postService = {
       try {
         const { data, error } = await supabase
           .from('posts')
-          .select('*')
+          .select('*, profiles(full_name, avatar_url, role, bio)')
           .eq('slug', slug)
+          .eq('status', 'published')
           .maybeSingle()
 
         if (!error && data) {
-          return data as Post
+          return mapSupabasePostToFrontend(data as Record<string, unknown>)
         }
       } catch {
         // Fallback
@@ -552,7 +588,25 @@ export const postService = {
    * Get related posts
    */
   async getRelatedPosts(currentPost: Post, limit = 3): Promise<Post[]> {
-    const all = FALLBACK_SEED_POSTS.filter((p) => p.id !== currentPost.id)
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*, profiles(full_name, avatar_url, role, bio)')
+          .eq('status', 'published')
+          .neq('slug', currentPost.slug)
+          .eq('category', currentPost.pillar)
+          .limit(limit)
+
+        if (!error && data && data.length > 0) {
+          return data.map((r) => mapSupabasePostToFrontend(r as Record<string, unknown>))
+        }
+      } catch {
+        // Fallback to in-memory
+      }
+    }
+
+    const all = FALLBACK_SEED_POSTS.filter((p) => p.id !== currentPost.id && p.slug !== currentPost.slug)
     const samePillar = all.filter((p) => p.pillar === currentPost.pillar)
     if (samePillar.length >= limit) {
       return samePillar.slice(0, limit)
