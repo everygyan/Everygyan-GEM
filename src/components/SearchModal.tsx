@@ -1,60 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, FileText, BookOpen, Compass, ArrowRight, X } from 'lucide-react'
+import { Search, FileText, BookOpen, Compass, ArrowRight, X, Clock, Eye } from 'lucide-react'
 import { Badge } from './ui/Badge'
-
-interface SearchItem {
-  id: string
-  title: string
-  pillar: 'blog' | 'learning' | 'travel'
-  description: string
-  path: string
-}
-
-const SAMPLE_SEARCH_DATA: SearchItem[] = [
-  {
-    id: '1',
-    title: 'Architecting Scalable Edge Functions with Supabase',
-    pillar: 'blog',
-    description: 'Learn how to deploy latency-sensitive background logic globally.',
-    path: '/blog',
-  },
-  {
-    id: '2',
-    title: 'Complete Masterclass: React 19 Concurrent Rendering',
-    pillar: 'learning',
-    description: 'Master Actions, optimistic updates, and useTransition hooks.',
-    path: '/learning',
-  },
-  {
-    id: '3',
-    title: 'Kyoto Off-The-Beaten-Path: Hidden Temples & Teahouses',
-    pillar: 'travel',
-    description: 'A 7-day serene itinerary beyond the bustling tourist tracks.',
-    path: '/travel',
-  },
-  {
-    id: '4',
-    title: 'Designing Resilient Micro-Frontends with Vite Module Federation',
-    pillar: 'blog',
-    description: 'Strategies for enterprise web architecture without performance regressions.',
-    path: '/blog',
-  },
-  {
-    id: '5',
-    title: 'TypeScript 6.0 Type Gymnastics for Production Systems',
-    pillar: 'learning',
-    description: 'Const generics, template literal types, and custom utility schemas.',
-    path: '/learning',
-  },
-  {
-    id: '6',
-    title: 'Nordic Road Trip: Fjord Crossing & Northern Lights Guide',
-    pillar: 'travel',
-    description: 'Practical logistics, EV charging stations, and photography spots in Tromsø.',
-    path: '/travel',
-  },
-]
+import { postService } from '../services/postService'
+import type { Post, PillarType } from '../types'
 
 interface SearchModalProps {
   isOpen: boolean
@@ -63,25 +12,48 @@ interface SearchModalProps {
 
 export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('')
-  const [selectedPillar, setSelectedPillar] = useState<'all' | 'blog' | 'learning' | 'travel'>('all')
+  const [selectedPillar, setSelectedPillar] = useState<'all' | PillarType>('all')
+  const [results, setResults] = useState<Post[]>([])
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     if (!isOpen) {
       setQuery('')
       setSelectedPillar('all')
+      setResults([])
+      return
     }
+
+    // Load initial suggestions
+    loadSearchResults('', 'all')
   }, [isOpen])
 
-  const filteredItems = SAMPLE_SEARCH_DATA.filter((item) => {
-    const matchesPillar = selectedPillar === 'all' || item.pillar === selectedPillar
-    const matchesQuery =
-      item.title.toLowerCase().includes(query.toLowerCase()) ||
-      item.description.toLowerCase().includes(query.toLowerCase())
-    return matchesPillar && matchesQuery
-  })
+  const loadSearchResults = async (searchQuery: string, pillar: 'all' | PillarType) => {
+    setLoading(true)
+    try {
+      const response = await postService.getPosts({
+        search: searchQuery,
+        pillar: pillar !== 'all' ? pillar : undefined,
+        limit: 8,
+      })
+      setResults(response.posts)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const getPillarIcon = (pillar: 'blog' | 'learning' | 'travel') => {
+  const handleQueryChange = (val: string) => {
+    setQuery(val)
+    loadSearchResults(val, selectedPillar)
+  }
+
+  const handlePillarChange = (pillar: 'all' | PillarType) => {
+    setSelectedPillar(pillar)
+    loadSearchResults(query, pillar)
+  }
+
+  const getPillarIcon = (pillar: PillarType) => {
     switch (pillar) {
       case 'blog':
         return <FileText className="h-4 w-4 text-indigo-500" />
@@ -103,7 +75,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
@@ -115,15 +87,15 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="Search stories, learning tracks, and travel guides..."
             autoFocus
             className="w-full bg-transparent px-3 text-base text-foreground placeholder:text-foreground-muted focus:outline-none"
           />
           {query && (
             <button
-              onClick={() => setQuery('')}
-              className="rounded-md p-1 text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+              onClick={() => handleQueryChange('')}
+              className="rounded-md p-1 text-foreground-muted hover:bg-surface-subtle hover:text-foreground cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -139,7 +111,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
           {(['all', 'blog', 'learning', 'travel'] as const).map((pillar) => (
             <button
               key={pillar}
-              onClick={() => setSelectedPillar(pillar)}
+              onClick={() => handlePillarChange(pillar)}
               className={`rounded-lg px-2.5 py-1 font-medium capitalize transition-all cursor-pointer ${
                 selectedPillar === pillar
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
@@ -153,18 +125,20 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
 
         {/* Search Results List */}
         <div className="max-h-96 overflow-y-auto p-2">
-          {filteredItems.length === 0 ? (
+          {loading ? (
+            <div className="py-8 text-center text-sm text-foreground-muted">Searching knowledge base...</div>
+          ) : results.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-sm text-foreground-muted">No results found for &ldquo;{query}&rdquo;</p>
-              <p className="mt-1 text-xs text-foreground-muted">Try searching with broader terms or clear filter.</p>
+              <p className="mt-1 text-xs text-foreground-muted">Try searching with broader keywords or clear filter.</p>
             </div>
           ) : (
             <div className="space-y-1">
-              {filteredItems.map((item) => (
+              {results.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => {
-                    navigate(item.path)
+                    navigate(`/post/${item.slug}`)
                     onClose()
                   }}
                   className="group flex cursor-pointer items-center justify-between rounded-xl p-3 transition-colors hover:bg-surface-subtle"
@@ -183,8 +157,18 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                         </Badge>
                       </div>
                       <p className="mt-0.5 text-xs text-foreground-muted line-clamp-1">
-                        {item.description}
+                        {item.excerpt}
                       </p>
+                      <div className="mt-1.5 flex items-center gap-3 text-[11px] text-foreground-muted">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {item.readTime}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          {item.views} views
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <ArrowRight className="h-4 w-4 text-foreground-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />

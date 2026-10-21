@@ -2,11 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '../context/ThemeContext'
+import { AuthProvider } from '../context/AuthContext'
 import { Navbar } from './Navbar'
 
 describe('Navbar Component', () => {
   beforeEach(() => {
-    // Mock matchMedia for ThemeProvider
+    localStorage.clear()
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockImplementation((query) => ({
@@ -25,9 +26,11 @@ describe('Navbar Component', () => {
   it('renders EveryGyan brand logo and link to home', () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <BrowserRouter>
-          <Navbar />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Navbar />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -38,9 +41,11 @@ describe('Navbar Component', () => {
   it('renders all core pillar navigation links in desktop navbar', () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <BrowserRouter>
-          <Navbar />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Navbar />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -55,9 +60,11 @@ describe('Navbar Component', () => {
   it('renders search trigger with keyboard shortcut and theme toggle button', () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <BrowserRouter>
-          <Navbar />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Navbar />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 

@@ -2,11 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '../context/ThemeContext'
+import { AuthProvider } from '../context/AuthContext'
 import { Home } from './Home'
 import { BottomNav } from '../components/BottomNav'
 
 describe('Homepage & Layout Shell', () => {
   beforeEach(() => {
+    localStorage.clear()
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockImplementation((query) => ({
@@ -25,9 +27,11 @@ describe('Homepage & Layout Shell', () => {
   it('renders Bento Grid with mobile 1-col, tablet 2-col, and desktop 12-col responsive classes', () => {
     const { container } = render(
       <ThemeProvider defaultTheme="light">
-        <BrowserRouter>
-          <Home />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Home />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -46,9 +50,11 @@ describe('Homepage & Layout Shell', () => {
   it('filters posts accurately when clicking pillar tabs', () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <BrowserRouter>
-          <Home />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Home />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -63,9 +69,11 @@ describe('Homepage & Layout Shell', () => {
   it('subscribes successfully to Weekly Gyan Letter', () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <BrowserRouter>
-          <Home />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Home />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 
@@ -80,9 +88,11 @@ describe('Homepage & Layout Shell', () => {
   it('renders BottomNav with mobile thumb-friendly actions and md:hidden class', () => {
     render(
       <ThemeProvider defaultTheme="light">
-        <BrowserRouter>
-          <BottomNav />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <BottomNav />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     )
 

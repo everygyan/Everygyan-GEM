@@ -11,13 +11,16 @@ import {
   Mail,
   User,
   ArrowRight,
+  LayoutDashboard,
 } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { Button } from './ui/Button'
 import { SearchModal } from './SearchModal'
+import { useAuth } from '../context/AuthContext'
 
 export const Navbar: React.FC = () => {
   const location = useLocation()
+  const { isAuthenticated, profile, isAdmin } = useAuth()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
@@ -119,14 +122,28 @@ export const Navbar: React.FC = () => {
 
             {/* Desktop Auth / Profile CTA */}
             <div className="hidden lg:flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<User className="h-3.5 w-3.5" />}
-                onClick={() => alert('Supabase Auth modal will connect here in Phase 2!')}
-              >
-                Sign In
-              </Button>
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="sm" leftIcon={<LayoutDashboard className="h-3.5 w-3.5 text-indigo-500" />}>
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <Link to="/profile">
+                    <Button variant="outline" size="sm" leftIcon={<User className="h-3.5 w-3.5" />}>
+                      {profile?.fullName || 'Profile'}
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <Link to="/login">
+                  <Button variant="outline" size="sm" leftIcon={<User className="h-3.5 w-3.5" />}>
+                    Sign In
+                  </Button>
+                </Link>
+              )}
             </div>
 
             {/* Tablet / Mobile Hamburger Menu Button (hidden on desktop) */}
@@ -225,17 +242,28 @@ export const Navbar: React.FC = () => {
 
             {/* Bottom Actions in Drawer */}
             <div className="border-t border-border pt-6 space-y-3">
-              <Button
-                variant="primary"
-                className="w-full"
-                leftIcon={<User className="h-4 w-4" />}
-                onClick={() => {
-                  setIsDrawerOpen(false)
-                  alert('Supabase Auth login flow!')
-                }}
-              >
-                Sign In to EveryGyan
-              </Button>
+              {isAuthenticated ? (
+                <div className="space-y-2">
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setIsDrawerOpen(false)}>
+                      <Button variant="blog" className="w-full mb-2" leftIcon={<LayoutDashboard className="h-4 w-4" />}>
+                        Admin Console
+                      </Button>
+                    </Link>
+                  )}
+                  <Link to="/profile" onClick={() => setIsDrawerOpen(false)}>
+                    <Button variant="outline" className="w-full" leftIcon={<User className="h-4 w-4" />}>
+                      My Profile ({profile?.fullName || 'User'})
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <Link to="/login" onClick={() => setIsDrawerOpen(false)}>
+                  <Button variant="primary" className="w-full" leftIcon={<User className="h-4 w-4" />}>
+                    Sign In to EveryGyan
+                  </Button>
+                </Link>
+              )}
               <div className="flex items-center justify-between px-2 text-xs text-foreground-muted">
                 <span>Theme Mode</span>
                 <ThemeToggle showLabel />

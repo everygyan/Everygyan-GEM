@@ -191,7 +191,7 @@ export const Home: React.FC = () => {
               </div>
 
               <h2 className="mt-6 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground font-serif leading-snug">
-                <Link to="/blog" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <Link to={`/post/${featuredStory.slug}`} className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                   {featuredStory.title}
                 </Link>
               </h2>
@@ -213,7 +213,7 @@ export const Home: React.FC = () => {
                   <p className="text-xs text-foreground-muted">{featuredStory.author.role}</p>
                 </div>
               </div>
-              <Link to="/blog">
+              <Link to={`/post/${featuredStory.slug}`}>
                 <Button variant="blog" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
                   Read Deep Dive
                 </Button>
@@ -236,7 +236,7 @@ export const Home: React.FC = () => {
                   </span>
                 </div>
                 <h3 className="mt-4 text-xl font-bold text-foreground font-serif leading-snug">
-                  <Link to="/learning" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <Link to={`/post/${spotlightLearning.slug}`} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                     {spotlightLearning.title}
                   </Link>
                 </h3>
@@ -250,7 +250,7 @@ export const Home: React.FC = () => {
                   <Clock className="h-3.5 w-3.5" />
                   <span>{spotlightLearning.readTime}</span>
                 </div>
-                <Link to="/learning">
+                <Link to={`/post/${spotlightLearning.slug}`}>
                   <Button variant="outline" size="sm" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
                     Explore Track
                   </Button>
@@ -271,7 +271,7 @@ export const Home: React.FC = () => {
                   </span>
                 </div>
                 <h3 className="mt-4 text-xl font-bold text-foreground font-serif leading-snug">
-                  <Link to="/travel" className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                  <Link to={`/post/${spotlightTravel.slug}`} className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
                     {spotlightTravel.title}
                   </Link>
                 </h3>
@@ -285,7 +285,7 @@ export const Home: React.FC = () => {
                   <Calendar className="h-3.5 w-3.5" />
                   <span>{spotlightTravel.date}</span>
                 </div>
-                <Link to="/travel">
+                <Link to={`/post/${spotlightTravel.slug}`}>
                   <Button variant="outline" size="sm" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
                     View Route
                   </Button>
@@ -359,7 +359,7 @@ export const Home: React.FC = () => {
                 </div>
 
                 <h3 className="mt-4 text-xl font-bold text-foreground font-serif leading-snug line-clamp-2">
-                  <Link to={`/${post.pillar}`} className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                  <Link to={`/post/${post.slug}`} className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                     {post.title}
                   </Link>
                 </h3>
@@ -383,7 +383,7 @@ export const Home: React.FC = () => {
                 </div>
 
                 <Link
-                  to={`/${post.pillar}`}
+                  to={`/post/${post.slug}`}
                   className="rounded-lg p-2 text-foreground-muted hover:bg-surface-subtle hover:text-foreground transition-colors"
                   aria-label={`Read ${post.title}`}
                 >

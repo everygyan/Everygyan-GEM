@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Home, Compass, Search, Bookmark, User, X, FileText, BookOpen, ArrowRight } from 'lucide-react'
 import { SearchModal } from './SearchModal'
 import { Button } from './ui/Button'
+import { useAuth } from '../context/AuthContext'
 
 export const BottomNav: React.FC = () => {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isExploreOpen, setIsExploreOpen] = useState(false)
   const [isSavedOpen, setIsSavedOpen] = useState(false)
@@ -64,11 +67,15 @@ export const BottomNav: React.FC = () => {
 
         {/* Account */}
         <button
-          onClick={() => alert('Supabase Auth user session modal in Phase 2!')}
-          className="flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          onClick={() => navigate(isAuthenticated ? '/profile' : '/login')}
+          className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 transition-colors cursor-pointer ${
+            ['/login', '/signup', '/profile', '/admin'].includes(location.pathname)
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-foreground-muted hover:text-foreground'
+          }`}
         >
           <User className="h-5 w-5" />
-          <span className="text-[10px]">Account</span>
+          <span className="text-[10px]">{isAuthenticated ? 'Profile' : 'Account'}</span>
         </button>
       </nav>
 
