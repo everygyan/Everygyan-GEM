@@ -39,8 +39,8 @@
           "operation": "read",
           "documentId": {
             "__rl": true,
-            "value": "Articles",
-            "mode": "name"
+            "value": "17Tss_5b6v2ZjdRYHw5hZeoEhbggTDsclO5FYl4PY3yA",
+            "mode": "id"
           },
           "sheetName": {
             "__rl": true,
@@ -124,7 +124,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Extract the current topic and clean up input fields\nconst item = $input.first().json;\nconst topic = String(item.Topic || item.topic || '').trim();\n\nif (!topic) {\n  throw new Error(\"Topic is empty or invalid.\");\n}\n\n// Pass clean metadata to the AI generation prompt\nreturn [{\n  json: {\n    topic: topic,\n    originalStatus: item.Status || 'New',\n    rowNumber: item.row_number || null,\n    fetchedAt: new Date().toISOString()\n  }\n}];"
+          "jsCode": "// Extract the current topic and clean up input fields\nconst item = $input.first().json;\nconst topic = String(item.Topic || item.topic || '').trim();\n\nif (!topic) {\n  throw new Error(\"Topic is empty or invalid.\");\n}\n\nreturn [{\n  json: {\n    topic: topic,\n    originalStatus: item.Status || 'New',\n    rowNumber: item.row_number || null,\n    fetchedAt: new Date().toISOString()\n  }\n}];"
         },
         "id": "node-prepare-context",
         "name": "Prepare Topic Context",
@@ -138,7 +138,7 @@
       {
         "parameters": {
           "promptType": "define",
-          "text": "=You are a senior publication editor, research strategist, and writer for EveryGyan (everygyan.com).\n\nTOPIC: {{ $json.topic }}\n\nGenerate an authoritative, engaging ~500-word article formatted in clean Markdown, alongside all required metadata matching the EveryGyan CMS Create Article specifications.\n\nCRITICAL REQUIREMENTS:\n1. WORD COUNT: The article body must be approximately 500 words of substantive, high-value content.\n2. MARKDOWN FORMATTING: Structure the content with:\n   - ## Key Takeaways & Overview\n   - ### Deep-Dive Insights & Analysis (with bullet points or comparison)\n   - ### Real-World Examples or Practical Tips\n   - ## Editorial Conclusion & Next Steps\n3. CATEGORY: Map automatically to one of: \"blog\" (technology, editorial, lifestyle, business), \"learning\" (tutorials, step-by-step guides), or \"travel\" (destinations, itineraries).\n4. STATUS: Must strictly be \"draft\".\n5. UNSPASH COVER IMAGE: Provide a high-resolution, relevant Unsplash photo URL (e.g. technology/Apple/editorial photo).\n\nOUTPUT FORMAT:\nReturn ONLY a valid, raw JSON object. Do not wrap in markdown fences (```json) and do not include conversational greetings.\n\nSTRICT JSON SCHEMA:\n{\n  \"title\": \"Engaging, high-converting article title\",\n  \"slug\": \"url-friendly-lowercase-slug-using-hyphens\",\n  \"excerpt\": \"A concise 1-2 sentence overview for cards and RSS (under 160 characters).\",\n  \"category\": \"blog\",\n  \"tags\": [\"Technology\", \"iOS\", \"Apple\", \"Updates\"],\n  \"cover_image\": \"https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=1200&q=80\",\n  \"reading_time_minutes\": 3,\n  \"content\": \"Full ~500-word Markdown article text...\",\n  \"metadata\": {\n    \"seo_title\": \"SEO title under 60 characters\",\n    \"meta_description\": \"SEO description under 160 characters with strong call to action\",\n    \"focus_keywords\": [\"keyword1\", \"keyword2\", \"keyword3\"],\n    \"citations\": [\n      { \"title\": \"Official Apple Developer Documentation\", \"url\": \"https://developer.apple.com\" },\n      { \"title\": \"TechCrunch Analysis\", \"url\": \"https://techcrunch.com\" }\n    ]\n  }\n}"
+          "text": "=You are a senior publication editor, research strategist, and writer for EveryGyan (everygyan.com).\n\nTOPIC: {{ $json.topic }}\n\nGenerate an authoritative, engaging ~500-word article formatted in clean Markdown, alongside all required metadata matching the EveryGyan CMS specifications.\n\nCRITICAL REQUIREMENTS:\n1. WORD COUNT: The article body must be approximately 500 words of substantive, high-value content.\n2. MARKDOWN FORMATTING: Structure the content with:\n   - ## Key Takeaways & Overview\n   - ### Deep-Dive Insights & Analysis (with bullet points or comparison)\n   - ### Real-World Examples or Practical Tips\n   - ## Editorial Conclusion & Next Steps\n3. CATEGORY: Map automatically to one of: \"Tech\", \"Travel\", \"Learning\", \"Health & Wellness\", or \"Latest News\". (e.g. for iOS or iPhone topics, use \"Tech\").\n4. STATUS: Must strictly be \"draft\".\n5. UNSPASH COVER IMAGE: Provide a high-resolution, relevant Unsplash photo URL.\n\nOUTPUT FORMAT:\nReturn ONLY a valid, raw JSON object. Do not wrap in markdown fences (```json) and do not include conversational greetings.\n\nSTRICT JSON SCHEMA:\n{\n  \"title\": \"Engaging, high-converting article title\",\n  \"slug\": \"url-friendly-lowercase-slug-using-hyphens\",\n  \"excerpt\": \"A concise 1-2 sentence overview for cards and RSS (under 160 characters).\",\n  \"category\": \"Tech\",\n  \"tags\": [\"Technology\", \"iOS\", \"Apple\", \"Updates\"],\n  \"cover_image\": \"https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=1200&q=80\",\n  \"cover_caption\": \"Latest Apple iOS operating system features overview.\",\n  \"read_time\": \"3 min read\",\n  \"content\": \"Full ~500-word Markdown article text...\",\n  \"seo_title\": \"SEO title under 60 characters | EveryGyan\",\n  \"seo_description\": \"SEO description under 160 characters with strong call to action.\",\n  \"table_of_contents\": [\n    { \"id\": \"key-takeaways-overview\", \"level\": 2, \"title\": \"Key Takeaways & Overview\" },\n    { \"id\": \"deep-dive-insights-analysis\", \"level\": 3, \"title\": \"Deep-Dive Insights & Analysis\" },\n    { \"id\": \"editorial-conclusion-next-steps\", \"level\": 2, \"title\": \"Editorial Conclusion & Next Steps\" }\n  ],\n  \"references\": [\n    { \"title\": \"Official Apple Developer Documentation\", \"url\": \"https://developer.apple.com\" },\n    { \"title\": \"TechCrunch Analysis\", \"url\": \"https://techcrunch.com\" }\n  ]\n}"
         },
         "id": "node-ai-agent",
         "name": "Generate 500-Word Article (Gemini Agent)",
@@ -173,7 +173,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// 1. Extract raw output from the AI Agent node\nlet rawOutput = \"\";\nif ($input.first() && $input.first().json && $input.first().json.output) {\n  rawOutput = $input.first().json.output;\n} else if (typeof item !== 'undefined' && item.json && item.json.output) {\n  rawOutput = item.json.output;\n}\n\nif (!rawOutput) {\n  throw new Error(\"No output received from Gemini AI node.\");\n}\n\n// 2. Clean markdown code fences if present\nlet cleanJson = String(rawOutput)\n  .replace(/^\\s*```(?:json)?/i, '')\n  .replace(/```\\s*$/, '')\n  .trim();\n\n// Find JSON substring if enveloped in text\nconst firstBrace = cleanJson.indexOf('{');\nconst lastBrace = cleanJson.lastIndexOf('}');\nif (firstBrace !== -1 && lastBrace !== -1) {\n  cleanJson = cleanJson.slice(firstBrace, lastBrace + 1);\n}\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(cleanJson);\n} catch (e) {\n  throw new Error(\"Failed to parse Gemini output as JSON: \" + e.message + \" | Raw: \" + rawOutput.slice(0, 200));\n}\n\n// 3. Retrieve original topic context\nconst originalTopic = $(\"Prepare Topic Context\").first().json.topic;\n\n// 4. Validate and construct cohesive EveryGyan CMS post\nconst wordCount = (parsed.content || '').split(/\\s+/).filter(Boolean).length;\nconst readTime = Math.max(1, Math.ceil(wordCount / 200));\n\nconst slugBase = (parsed.slug || parsed.title || originalTopic)\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/^-+|-+$/g, '')\n  .slice(0, 80);\n\nconst uniqueSlug = slugBase + '-' + Math.random().toString(36).substring(2, 6);\n\nconst post = {\n  title: String(parsed.title || originalTopic).trim(),\n  slug: uniqueSlug,\n  excerpt: String(parsed.excerpt || (parsed.content || '').slice(0, 150) + '...').trim(),\n  content: String(parsed.content || '').trim(),\n  category: ['blog', 'learning', 'travel'].includes(parsed.category) ? parsed.category : 'blog',\n  tags: Array.isArray(parsed.tags) ? parsed.tags : [originalTopic, \"Technology\", \"EveryGyan\"],\n  cover_image: parsed.cover_image || 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=1200&q=80',\n  reading_time_minutes: readTime,\n  status: 'draft',\n  featured: false,\n  metadata: parsed.metadata || {\n    seo_title: parsed.title || originalTopic,\n    meta_description: parsed.excerpt || '',\n    focus_keywords: [originalTopic]\n  }\n};\n\nreturn [{\n  json: {\n    originalTopic: originalTopic,\n    post: post\n  }\n}];"
+          "jsCode": "// 1. Extract raw output from the AI Agent node\nlet rawOutput = \"\";\nif ($input.first() && $input.first().json && $input.first().json.output) {\n  rawOutput = $input.first().json.output;\n} else if (typeof item !== 'undefined' && item.json && item.json.output) {\n  rawOutput = item.json.output;\n}\n\nif (!rawOutput) {\n  throw new Error(\"No output received from Gemini AI node.\");\n}\n\n// 2. Clean markdown code fences if present\nlet cleanJson = String(rawOutput)\n  .replace(/^\\s*```(?:json)?/i, '')\n  .replace(/```\\s*$/, '')\n  .trim();\n\nconst firstBrace = cleanJson.indexOf('{');\nconst lastBrace = cleanJson.lastIndexOf('}');\nif (firstBrace !== -1 && lastBrace !== -1) {\n  cleanJson = cleanJson.slice(firstBrace, lastBrace + 1);\n}\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(cleanJson);\n} catch (e) {\n  throw new Error(\"Failed to parse Gemini output as JSON: \" + e.message + \" | Raw: \" + rawOutput.slice(0, 200));\n}\n\n// 3. Category Mapping for EveryGyan database\nconst categoryLookup = {\n  'tech': { id: 'e0563385-fdbf-4657-81ec-051799f8f16b', name: 'Tech', slug: 'tech' },\n  'travel': { id: 'b5a4c3d0-f6e9-46b3-80f8-36b701f8a397', name: 'Travel', slug: 'travel' },\n  'learning': { id: '4408e73f-bef5-462f-a954-93b0b6198ad2', name: 'Learning', slug: 'learning' },\n  'health': { id: '19f93cb4-b6fe-48ed-be2d-e9ab08d66bbd', name: 'Health & Wellness', slug: 'health' },\n  'news': { id: '49274f31-92f7-4b94-ac44-9a1399a3bebe', name: 'Latest News', slug: 'latest-news' }\n};\n\nconst catKey = (parsed.category || 'tech').toLowerCase();\nlet matchedCat = categoryLookup['tech'];\nfor (const [k, v] of Object.entries(categoryLookup)) {\n  if (catKey.includes(k) || k.includes(catKey)) {\n    matchedCat = v;\n    break;\n  }\n}\n\n// 4. Retrieve original topic context\nconst originalTopic = $(\"Prepare Topic Context\").first().json.topic;\n\n// 5. Generate Slug\nconst slugBase = (parsed.slug || parsed.title || originalTopic)\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/^-+|-+$/g, '')\n  .slice(0, 70);\n\nconst uniqueSlug = slugBase + '-' + Math.random().toString(36).substring(2, 6);\n\n// 6. Build Article Record matching public.articles in Supabase\nconst articleRecord = {\n  title: String(parsed.title || originalTopic).trim(),\n  slug: uniqueSlug,\n  excerpt: String(parsed.excerpt || (parsed.content || '').slice(0, 150) + '...').trim(),\n  content: String(parsed.content || '').trim(),\n  category: matchedCat.name,\n  category_slug: matchedCat.slug,\n  category_id: matchedCat.id,\n  author_id: \"a5d5fa9e-8101-45b6-9e1f-2be5f2c499f7\",\n  tags: Array.isArray(parsed.tags) ? parsed.tags : [originalTopic, matchedCat.name, \"EveryGyan\"],\n  read_time: parsed.read_time || \"3 min read\",\n  cover_image: parsed.cover_image || 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=1200&q=80',\n  cover_caption: parsed.cover_caption || parsed.title || originalTopic,\n  status: \"draft\",\n  published_at: null,\n  is_lead_story: false,\n  is_featured: false,\n  views_count: 0,\n  seo_title: parsed.seo_title || (parsed.title + \" | EveryGyan\"),\n  seo_description: parsed.seo_description || parsed.excerpt || \"\",\n  table_of_contents: parsed.table_of_contents || [\n    { id: \"overview\", level: 2, title: \"Overview\" },\n    { id: \"key-takeaways\", level: 3, title: \"Key Takeaways\" },\n    { id: \"conclusion\", level: 2, title: \"Conclusion\" }\n  ],\n  references: parsed.references || [\n    { title: \"EveryGyan\", url: \"https://everygyan.com\" }\n  ],\n  template_type: \"standard\",\n  template_data: {},\n  is_carousel: false\n};\n\nreturn [{\n  json: {\n    originalTopic: originalTopic,\n    article: articleRecord\n  }\n}];"
         },
         "id": "node-format-article",
         "name": "Format & Validate EveryGyan Article",
@@ -187,17 +187,21 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "={{ ($env.SUPABASE_URL || 'https://anmhiicptxjqitkmmuhf.supabase.co') + '/rest/v1/posts' }}",
+          "url": "https://wttiswajotrmmrcwzqdy.supabase.co/rest/v1/articles",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
               {
                 "name": "apikey",
-                "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFubWhpaWNwdHhqcWl0a21tdWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MDg0NTYsImV4cCI6MjEwODE4NDQ1Nn0.bcnjgBo9eMWA4eS8NKSxqkViMLKPxOCqYqCvqO6QGc0' }}"
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0dGlzd2Fqb3RybW1yY3d6cWR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjQ1MTgzMCwiZXhwIjoyMTA4MDI3ODMwfQ.3QsI-J0v1YiLFiG2--fo8yXVGCtX7RJW_mMzEgMfMVo"
               },
               {
                 "name": "Authorization",
-                "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFubWhpaWNwdHhqcWl0a21tdWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MDg0NTYsImV4cCI6MjEwODE4NDQ1Nn0.bcnjgBo9eMWA4eS8NKSxqkViMLKPxOCqYqCvqO6QGc0' }}"
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0dGlzd2Fqb3RybW1yY3d6cWR5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjQ1MTgzMCwiZXhwIjoyMTA4MDI3ODMwfQ.3QsI-J0v1YiLFiG2--fo8yXVGCtX7RJW_mMzEgMfMVo"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
               },
               {
                 "name": "Prefer",
@@ -207,7 +211,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={{ JSON.stringify({\n  title: $json.post.title,\n  slug: $json.post.slug,\n  excerpt: $json.post.excerpt,\n  content: $json.post.content,\n  category: $json.post.category,\n  tags: $json.post.tags,\n  cover_image: $json.post.cover_image,\n  reading_time_minutes: $json.post.reading_time_minutes,\n  status: \"draft\",\n  featured: false,\n  metadata: $json.post.metadata\n}) }}",
+          "jsonBody": "={{ JSON.stringify($json.article) }}",
           "options": {}
         },
         "id": "node-insert-supabase",
@@ -224,8 +228,8 @@
           "operation": "update",
           "documentId": {
             "__rl": true,
-            "value": "Articles",
-            "mode": "name"
+            "value": "17Tss_5b6v2ZjdRYHw5hZeoEhbggTDsclO5FYl4PY3yA",
+            "mode": "id"
           },
           "sheetName": {
             "__rl": true,
