@@ -225,7 +225,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Prepare beautifully formatted HTML content for the Google Doc\nconst articleData = $(\"Format & Validate EveryGyan Article\").first().json.article;\nconst originalTopic = $(\"Prepare Topic Context\").first().json.topic;\n\n// Helper: Convert markdown headings, lists, bold to HTML\nfunction mdToHtml(md) {\n  if (!md) return \"\";\n  let html = md\n    .replace(/^### (.*$)/gim, '<h3>$1</h3>')\n    .replace(/^## (.*$)/gim, '<h2>$1</h2>')\n    .replace(/^# (.*$)/gim, '<h1>$1</h1>')\n    .replace(/\\*\\*(.*?)\\*\\*/gim, '<strong>$1</strong>')\n    .replace(/\\*(.*?)\\*/gim, '<em>$1</em>')\n    .replace(/^\\s*[-*]\\s+(.*$)/gim, '<li>$1</li>')\n    .replace(/^\\>\\s+(.*$)/gim, '<blockquote style=\"border-left: 3px solid #1a73e8; margin: 1em 0; padding-left: 1em; color: #555;\">$1</blockquote>')\n    .replace(/\\n\\s*\\n/gim, '</p><p>');\n\n  html = html.replace(/(<li>[\\s\\S]*?<\\/li>)/gim, '<ul style=\"padding-left: 20px;\">$1</ul>');\n  return '<p>' + html + '</p>';\n}\n\nconst bodyHtml = mdToHtml(articleData.content);\n\nconst fullHtml = `<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"></head>\n<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #202124;\">\n  <h1 style=\"color: #1a73e8; margin-bottom: 6px;\">${articleData.title}</h1>\n  <p style=\"color: #5f6368; font-size: 13px; margin-top: 0;\">\n    <strong>Topic:</strong> ${originalTopic} &nbsp;|&nbsp;\n    <strong>Category:</strong> ${articleData.category} &nbsp;|&nbsp;\n    <strong>Workflow State:</strong> Draft (Work in Progress) &nbsp;|&nbsp;\n    <strong>Read Time:</strong> ${articleData.read_time}\n  </p>\n  <hr style=\"border: 0; border-top: 1px solid #dadce0; margin: 16px 0;\" />\n  <div style=\"background-color: #f8f9fa; border-left: 4px solid #1a73e8; padding: 12px 16px; margin-bottom: 20px;\">\n    <strong style=\"color: #202124;\">Summary / Excerpt:</strong>\n    <p style=\"margin: 4px 0 0 0; color: #3c4043;\">${articleData.excerpt}</p>\n  </div>\n  <hr style=\"border: 0; border-top: 1px solid #dadce0; margin: 16px 0;\" />\n  ${bodyHtml}\n  <hr style=\"border: 0; border-top: 1px solid #dadce0; margin: 24px 0;\" />\n  <h3 style=\"color: #1a73e8;\">Search Engine & CMS Metadata</h3>\n  <ul>\n    <li><strong>SEO Title:</strong> ${articleData.seo_title}</li>\n    <li><strong>SEO Meta Description:</strong> ${articleData.seo_description}</li>\n    <li><strong>Article Tags:</strong> ${articleData.tags.join(', ')}</li>\n    <li><strong>Target Slug:</strong> /post/${articleData.slug}</li>\n  </ul>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    docTitle: articleData.title + \" (Draft)\",\n    htmlContent: fullHtml,\n    originalTopic: originalTopic\n  }\n}];"
+          "jsCode": "// Prepare beautifully formatted HTML content for the Google Doc\nconst articleData = $(\"Format & Validate EveryGyan Article\").first().json.article;\nconst originalTopic = $(\"Prepare Topic Context\").first().json.topic;\n\nfunction mdToHtml(md) {\n  if (!md) return \"\";\n  let html = md\n    .replace(/^### (.*$)/gim, '<h3>$1</h3>')\n    .replace(/^## (.*$)/gim, '<h2>$1</h2>')\n    .replace(/^# (.*$)/gim, '<h1>$1</h1>')\n    .replace(/\\*\\*(.*?)\\*\\*/gim, '<strong>$1</strong>')\n    .replace(/\\*(.*?)\\*/gim, '<em>$1</em>')\n    .replace(/^\\s*[-*]\\s+(.*$)/gim, '<li>$1</li>')\n    .replace(/^\\>\\s+(.*$)/gim, '<blockquote style=\"border-left: 3px solid #1a73e8; margin: 1em 0; padding-left: 1em; color: #555;\">$1</blockquote>')\n    .replace(/\\n\\s*\\n/gim, '</p><p>');\n\n  html = html.replace(/(<li>[\\s\\S]*?<\\/li>)/gim, '<ul style=\"padding-left: 20px;\">$1</ul>');\n  return '<p>' + html + '</p>';\n}\n\nconst bodyHtml = mdToHtml(articleData.content);\n\nconst fullHtml = `<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"></head>\n<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #202124;\">\n  <h1 style=\"color: #1a73e8; margin-bottom: 6px;\">${articleData.title}</h1>\n  <p style=\"color: #5f6368; font-size: 13px; margin-top: 0;\">\n    <strong>Topic:</strong> ${originalTopic} &nbsp;|&nbsp;\n    <strong>Category:</strong> ${articleData.category} &nbsp;|&nbsp;\n    <strong>Workflow State:</strong> Draft (Work in Progress) &nbsp;|&nbsp;\n    <strong>Read Time:</strong> ${articleData.read_time}\n  </p>\n  <hr style=\"border: 0; border-top: 1px solid #dadce0; margin: 16px 0;\" />\n  <div style=\"background-color: #f8f9fa; border-left: 4px solid #1a73e8; padding: 12px 16px; margin-bottom: 20px;\">\n    <strong style=\"color: #202124;\">Summary / Excerpt:</strong>\n    <p style=\"margin: 4px 0 0 0; color: #3c4043;\">${articleData.excerpt}</p>\n  </div>\n  <hr style=\"border: 0; border-top: 1px solid #dadce0; margin: 16px 0;\" />\n  ${bodyHtml}\n  <hr style=\"border: 0; border-top: 1px solid #dadce0; margin: 24px 0;\" />\n  <h3 style=\"color: #1a73e8;\">Search Engine & CMS Metadata</h3>\n  <ul>\n    <li><strong>SEO Title:</strong> ${articleData.seo_title}</li>\n    <li><strong>SEO Meta Description:</strong> ${articleData.seo_description}</li>\n    <li><strong>Article Tags:</strong> ${articleData.tags.join(', ')}</li>\n    <li><strong>Target Slug:</strong> /post/${articleData.slug}</li>\n  </ul>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    docTitle: articleData.title + \" (Draft)\",\n    htmlContent: fullHtml,\n    originalTopic: originalTopic\n  }\n}];"
         },
         "id": "node-format-doc",
         "name": "Format Article for Google Doc",
@@ -239,13 +239,13 @@
       {
         "parameters": {
           "resource": "file",
-          "operation": "create",
+          "operation": "createFromText",
           "name": "={{ $json.docTitle }}",
           "content": "={{ $json.htmlContent }}",
           "folderId": {
             "__rl": true,
-            "value": "EG articles",
-            "mode": "name"
+            "value": "1M_oq-tkPYhatxg159TA3jM788NoK4xsu",
+            "mode": "id"
           },
           "options": {
             "convertToGoogleDocument": true
@@ -264,11 +264,12 @@
             "id": "GdriveOAuth2EveryGyan",
             "name": "Google Drive account"
           }
-        },
-        "continueOnFail": true
+        }
       },
       {
         "parameters": {
+          "authentication": "oAuth2",
+          "resource": "sheet",
           "operation": "update",
           "documentId": {
             "__rl": true,
@@ -280,18 +281,15 @@
             "value": "Articles",
             "mode": "name"
           },
-          "columnToMatchOn": "Topic",
-          "valueToMatchOn": "={{ $('Prepare Topic Context').item.json.topic }}",
-          "fieldsUi": {
-            "fieldValues": [
-              {
-                "fieldId": "Status",
-                "fieldValue": "Draft"
-              },
-              {
-                "fieldId": "Draft date",
-                "fieldValue": "={{ $now.toFormat('yyyy-MM-dd') }}"
-              }
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Status": "Draft",
+              "Topic": "={{ $('Prepare Topic Context').first().json.topic }}",
+              "Draft date": "={{ $now.toFormat('yyyy-MM-dd') }}"
+            },
+            "matchingColumns": [
+              "Topic"
             ]
           },
           "options": {}
