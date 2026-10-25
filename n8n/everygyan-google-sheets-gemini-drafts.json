@@ -39,12 +39,12 @@
           "operation": "read",
           "documentId": {
             "__rl": true,
-            "value": "17Tss_5b6v2ZjdRYHw5hZeoEhbggTDsclO5FYl4PY3yA",
-            "mode": "id"
+            "value": "https://docs.google.com/spreadsheets/d/17Tss_5b6v2ZjdRYHw5hZeoEhbggTDsclO5FYl4PY3yA/edit",
+            "mode": "url"
           },
           "sheetName": {
             "__rl": true,
-            "value": "Article",
+            "value": "Articles",
             "mode": "name"
           },
           "options": {
@@ -228,16 +228,16 @@
           "operation": "update",
           "documentId": {
             "__rl": true,
-            "value": "17Tss_5b6v2ZjdRYHw5hZeoEhbggTDsclO5FYl4PY3yA",
-            "mode": "id"
+            "value": "https://docs.google.com/spreadsheets/d/17Tss_5b6v2ZjdRYHw5hZeoEhbggTDsclO5FYl4PY3yA/edit",
+            "mode": "url"
           },
           "sheetName": {
             "__rl": true,
-            "value": "Article",
+            "value": "Articles",
             "mode": "name"
           },
           "columnToMatchOn": "Topic",
-          "valueToMatchOn": "={{ $('Format & Validate EveryGyan Article').first().json.originalTopic }}",
+          "valueToMatchOn": "={{ $('Prepare Topic Context').item.json.topic }}",
           "fieldsUi": {
             "fieldValues": [
               {
