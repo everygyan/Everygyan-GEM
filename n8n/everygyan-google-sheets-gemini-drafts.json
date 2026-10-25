@@ -147,7 +147,10 @@
         "position": [
           300,
           200
-        ]
+        ],
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 3000
       },
       {
         "parameters": {
@@ -164,6 +167,9 @@
           300,
           420
         ],
+        "retryOnFail": true,
+        "maxTries": 5,
+        "waitBetweenTries": 3000,
         "credentials": {
           "googlePalmApi": {
             "id": "mzqSvtY7EgO2BHt4",
