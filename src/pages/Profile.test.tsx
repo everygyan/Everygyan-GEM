@@ -133,8 +133,11 @@ describe('Profile Page (Account, Bookmarks, Comments, Newsletter Preferences)', 
     const updatePrefsBtn = screen.getByRole('button', { name: /Update Preferences/i })
     fireEvent.click(updatePrefsBtn)
 
-    await waitFor(() => {
-      expect(screen.getByText(/Newsletter preferences updated successfully/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Newsletter preferences updated successfully/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
   })
 })

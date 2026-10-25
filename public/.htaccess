@@ -34,3 +34,18 @@
   Header set X-XSS-Protection "1; mode=block"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
+
+# Block web access to sensitive project files (lockfiles, env, config)
+<FilesMatch "(^#.*#|\.(bak|config|dist|fla|inc|ini|log|psd|sh|sql|sw[op]|env|lock|json)|~)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Block access to hidden directories and node_modules if present on server
+RedirectMatch 403 ^/node_modules/
+RedirectMatch 403 ^/\.git

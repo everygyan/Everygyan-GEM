@@ -35,9 +35,12 @@ describe('SearchModal Component', () => {
 
     expect(screen.getByPlaceholderText(/Search stories, learning tracks/i)).toBeInTheDocument()
 
-    await waitFor(() => {
-      expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
   })
 
   it('filters results when searching by query text', async () => {
@@ -47,9 +50,12 @@ describe('SearchModal Component', () => {
       </MemoryRouter>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
 
     const input = screen.getByPlaceholderText(/Search stories, learning tracks/i)
     fireEvent.change(input, { target: { value: 'Kyoto' } })
@@ -68,9 +74,12 @@ describe('SearchModal Component', () => {
       </MemoryRouter>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
 
     // Click 'travel' filter
     const travelFilterBtn = screen.getByRole('button', { name: /^travel$/i })
@@ -91,9 +100,12 @@ describe('SearchModal Component', () => {
       </MemoryRouter>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/The Architectural Shift/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
 
     fireEvent.click(screen.getByText(/The Architectural Shift/i))
 

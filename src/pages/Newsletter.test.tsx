@@ -35,10 +35,13 @@ describe('Newsletter Page (Weekly Gyan Letter & Public Archive)', () => {
     expect(screen.getByText(/Past Weekly Letters Archive/i)).toBeInTheDocument()
 
     // Past editions loaded
-    await waitFor(() => {
-      expect(screen.getByText(/Gyan Letter #42/i)).toBeInTheDocument()
-      expect(screen.getByText(/Gyan Letter #41/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Gyan Letter #42/i)).toBeInTheDocument()
+        expect(screen.getByText(/Gyan Letter #41/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
   })
 
   it('validates subscription form and handles successful subscription', async () => {

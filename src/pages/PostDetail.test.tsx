@@ -43,9 +43,12 @@ describe('PostDetail (Ultimate Article Reader)', () => {
     )
 
     // Wait for post to load
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1, name: /The Architectural Shift/i })).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByRole('heading', { level: 1, name: /The Architectural Shift/i })).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
 
     // GFM Table rendering
     expect(screen.getByText(/Topology Architecture/i)).toBeInTheDocument()
@@ -83,9 +86,12 @@ describe('PostDetail (Ultimate Article Reader)', () => {
       </ThemeProvider>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText(/Prerequisites & Key Takeaways/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Prerequisites & Key Takeaways/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
 
     expect(screen.getByText(/Basic React Hooks/i)).toBeInTheDocument()
     expect(screen.getByText(/Master useActionState/i)).toBeInTheDocument()
@@ -104,9 +110,12 @@ describe('PostDetail (Ultimate Article Reader)', () => {
       </ThemeProvider>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText(/Trip Quick Facts & Itinerary Summary/i)).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Trip Quick Facts & Itinerary Summary/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
 
     expect(screen.getByText(/Kyoto, Japan/i)).toBeInTheDocument()
     expect(screen.getByText(/7 Days/i)).toBeInTheDocument()

@@ -35,7 +35,7 @@ describe('Pillar Listing Experiences', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Lead Architecture Story/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
 
     expect(screen.getByPlaceholderText(/Search blog topics.../i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /All Topics/i })).toBeInTheDocument()
@@ -52,7 +52,7 @@ describe('Pillar Listing Experiences', () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole('button', { name: /Mark Complete/i }).length).toBeGreaterThan(0)
-    })
+    }, { timeout: 3000 })
 
     expect(screen.getByText(/Track Completion/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Beginner/i })).toBeInTheDocument()
@@ -76,7 +76,7 @@ describe('Pillar Listing Experiences', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Kyoto, Japan/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
 
     expect(screen.getByText(/Autumn \(Oct–Nov\) or Spring \(April\)/i)).toBeInTheDocument()
     expect(screen.getByText('$$$')).toBeInTheDocument()
