@@ -155,6 +155,48 @@ describe('Phase 5: Protected Admin Command Center', () => {
     expect(screen.getByText('Mastering PostgreSQL Internals')).toBeInTheDocument()
   })
 
+  it('supports inserting inline images into Markdown body via toolbar modal', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin/posts/new" element={<AdminPostEditor />} />
+      </Routes>,
+      ['/admin/posts/new']
+    )
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: /Insert Image/i })).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
+
+    // Open Image Modal
+    const insertImageBtn = screen.getByRole('button', { name: /Insert Image/i })
+    fireEvent.click(insertImageBtn)
+
+    // Modal is opened
+    expect(screen.getByText(/Insert Image into Article/i)).toBeInTheDocument()
+
+    // Switch to URL tab
+    const urlTab = screen.getByRole('button', { name: /Image by URL/i })
+    fireEvent.click(urlTab)
+
+    const urlInput = screen.getByPlaceholderText(/https:\/\/images\.unsplash\.com/i)
+    fireEvent.change(urlInput, { target: { value: 'https://images.unsplash.com/photo-example-1' } })
+
+    const altInput = screen.getByPlaceholderText(/e\.g\. Distributed database replication topology/i)
+    fireEvent.change(altInput, { target: { value: 'Cache Architecture Diagram' } })
+
+    const insertModalBtn = screen.getByRole('button', { name: /Insert into Article/i })
+    fireEvent.click(insertModalBtn)
+
+    // Content should now include the markdown image embed
+    await waitFor(() => {
+      const textarea = screen.getByPlaceholderText(/Draft in GitHub Flavored Markdown/i) as HTMLTextAreaElement
+      expect(textarea.value).toContain('![Cache Architecture Diagram](https://images.unsplash.com/photo-example-1)')
+    })
+  })
+
   it('renders AdminComments moderation center with status filtering and reply action', async () => {
     renderWithProviders(<AdminComments />)
 

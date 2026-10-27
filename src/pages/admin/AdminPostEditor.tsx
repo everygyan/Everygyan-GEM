@@ -15,6 +15,10 @@ import {
   BookOpen,
   X,
   Plus,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Sparkles,
+  UploadCloud,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -22,6 +26,8 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Badge } from '../../components/ui/Badge'
 import { ImageUploader } from '../../components/admin/ImageUploader'
+import { InlineImageModal } from '../../components/admin/InlineImageModal'
+import { compressImageToWebP, uploadImageToStorage } from '../../lib/imageCompressor'
 import { postService } from '../../services/postService'
 import type { Post, PillarType, DifficultyLevel, BudgetLevel } from '../../types'
 
@@ -64,6 +70,12 @@ export const AdminPostEditor: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // Inline Image & Editor interaction states
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [savedSelection, setSavedSelection] = useState<{ start: number; end: number } | null>(null)
+  const [isDraggingOverEditor, setIsDraggingOverEditor] = useState(false)
+  const [editorStatusToast, setEditorStatusToast] = useState<string | null>(null)
 
   useEffect(() => {
     if (isEditing && id) {
@@ -152,6 +164,166 @@ export const AdminPostEditor: React.FC = () => {
       textarea.focus()
       textarea.setSelectionRange(start + before.length, start + before.length + (selected ? selected.length : 4))
     }, 10)
+  }
+
+  const insertTextAtCursor = (textToInsert: string, customStart?: number, customEnd?: number) => {
+    const textarea = document.getElementById('post-markdown-editor') as HTMLTextAreaElement
+    const start = customStart ?? textarea?.selectionStart ?? content.length
+    const end = customEnd ?? textarea?.selectionEnd ?? content.length
+
+    const updated = content.substring(0, start) + textToInsert + content.substring(end)
+    setContent(updated)
+
+    if (textarea) {
+      setTimeout(() => {
+        textarea.focus()
+        const newPos = start + textToInsert.length
+        textarea.setSelectionRange(newPos, newPos)
+      }, 10)
+    }
+  }
+
+  const handleOpenImageModal = () => {
+    const textarea = document.getElementById('post-markdown-editor') as HTMLTextAreaElement
+    if (textarea) {
+      setSavedSelection({
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd,
+      })
+    } else {
+      setSavedSelection(null)
+    }
+    setIsImageModalOpen(true)
+  }
+
+  const handleInsertImageFromModal = (imageMarkdown: string) => {
+    if (savedSelection) {
+      insertTextAtCursor(imageMarkdown, savedSelection.start, savedSelection.end)
+    } else {
+      insertTextAtCursor(imageMarkdown)
+    }
+    setEditorStatusToast('✓ Inline image added to article')
+    setTimeout(() => setEditorStatusToast(null), 3000)
+  }
+
+  const handleInsertLink = () => {
+    const textarea = document.getElementById('post-markdown-editor') as HTMLTextAreaElement
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selected = content.substring(start, end)
+
+    const url = window.prompt('Enter link URL (e.g. https://...):', 'https://')
+    if (!url) return
+
+    const label = selected.trim() || 'Link text'
+    const linkMarkdown = `[${label}](${url})`
+    insertTextAtCursor(linkMarkdown, start, end)
+  }
+
+  const handleEditorPaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    let imageFile: File | null = null
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        imageFile = items[i].getAsFile()
+        break
+      }
+    }
+
+    if (!imageFile) return // Standard text paste
+
+    e.preventDefault()
+
+    const textarea = e.currentTarget
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const placeholder = `\n![Uploading image (${imageFile.name || 'clipboard'})...]()\n`
+
+    const before = content.substring(0, start)
+    const after = content.substring(end)
+    setContent(before + placeholder + after)
+    setEditorStatusToast('Compressing & uploading pasted image...')
+
+    try {
+      const compressed = await compressImageToWebP(imageFile, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        quality: 0.82,
+      })
+
+      const uploadRes = await uploadImageToStorage(compressed.file, 'media', 'articles')
+      if (uploadRes.error) throw new Error(uploadRes.error)
+
+      const markdownSnippet = `\n![Image](${uploadRes.url})\n\n`
+      setContent((prev) => prev.replace(placeholder, markdownSnippet))
+      setEditorStatusToast(`✓ Pasted image uploaded (${Math.round(compressed.compressedSize / 1024)} KB WebP)`)
+      setTimeout(() => setEditorStatusToast(null), 4000)
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || 'Failed to process pasted image'
+      setContent((prev) => prev.replace(placeholder, `\n<!-- Image upload failed: ${msg} -->\n`))
+      setErrorMsg(`Paste error: ${msg}`)
+    }
+  }
+
+  const handleEditorDragOver = (e: React.DragEvent<HTMLTextAreaElement>) => {
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault()
+      setIsDraggingOverEditor(true)
+    }
+  }
+
+  const handleEditorDragLeave = (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault()
+    setIsDraggingOverEditor(false)
+  }
+
+  const handleEditorDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault()
+    setIsDraggingOverEditor(false)
+
+    const files = e.dataTransfer.files
+    if (!files || files.length === 0) return
+
+    const imageFile = Array.from(files).find((f) => f.type.startsWith('image/'))
+    if (!imageFile) return
+
+    const textarea = e.currentTarget
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const placeholder = `\n![Uploading dropped image (${imageFile.name})...]()\n`
+
+    const before = content.substring(0, start)
+    const after = content.substring(end)
+    setContent(before + placeholder + after)
+    setEditorStatusToast('Uploading dropped image to WebP...')
+
+    try {
+      const compressed = await compressImageToWebP(imageFile, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        quality: 0.82,
+      })
+
+      const uploadRes = await uploadImageToStorage(compressed.file, 'media', 'articles')
+      if (uploadRes.error) throw new Error(uploadRes.error)
+
+      const cleanAlt = imageFile.name
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+      const markdownSnippet = `\n![${cleanAlt}](${uploadRes.url})\n\n`
+      setContent((prev) => prev.replace(placeholder, markdownSnippet))
+      setEditorStatusToast(`✓ Dropped image added (${Math.round(compressed.compressedSize / 1024)} KB WebP)`)
+      setTimeout(() => setEditorStatusToast(null), 4000)
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || 'Failed to process dropped image'
+      setContent((prev) => prev.replace(placeholder, `\n<!-- Image upload failed: ${msg} -->\n`))
+      setErrorMsg(`Drop error: ${msg}`)
+    }
   }
 
   const handleSave = async (targetStatus?: 'draft' | 'published') => {
@@ -366,70 +538,133 @@ export const AdminPostEditor: React.FC = () => {
 
             {/* Markdown Toolbar & Content Area */}
             <div>
-              <div className="flex items-center justify-between pb-2 border-b border-border/80">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Markdown Article Body
-                </label>
-                <div className="flex items-center gap-1 text-foreground-muted">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border/80">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    Markdown Article Body
+                  </label>
+                  {editorStatusToast && (
+                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 animate-in fade-in flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/60">
+                      <Sparkles className="h-3 w-3" />
+                      {editorStatusToast}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1 text-foreground-muted">
                   <button
                     type="button"
                     onClick={() => insertMarkdown('**', '**')}
-                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground"
-                    title="Bold"
+                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer"
+                    title="Bold (**text**)"
                   >
                     <Bold className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => insertMarkdown('*', '*')}
-                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground"
-                    title="Italic"
+                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer"
+                    title="Italic (*text*)"
                   >
                     <Italic className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => insertMarkdown('## ')}
-                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground"
-                    title="Heading"
+                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer"
+                    title="Heading (## Title)"
                   >
                     <Heading className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => insertMarkdown('```typescript\n', '\n```')}
-                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground"
-                    title="Code Block"
+                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer"
+                    title="Code Block (```...```)"
                   >
                     <Code className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => insertMarkdown('> ')}
-                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground"
-                    title="Blockquote"
+                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer"
+                    title="Blockquote (> text)"
                   >
                     <Quote className="h-3.5 w-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => insertMarkdown('- ')}
-                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground"
-                    title="Bulleted List"
+                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer"
+                    title="Bulleted List (- item)"
                   >
                     <List className="h-3.5 w-3.5" />
+                  </button>
+
+                  <div className="h-4 w-px bg-border mx-1" />
+
+                  {/* Insert Hyperlink */}
+                  <button
+                    type="button"
+                    onClick={handleInsertLink}
+                    className="p-1.5 rounded hover:bg-surface-subtle hover:text-foreground transition-colors cursor-pointer"
+                    title="Insert Link [text](url)"
+                  >
+                    <LinkIcon className="h-3.5 w-3.5 text-indigo-500" />
+                  </button>
+
+                  {/* Insert Image Button */}
+                  <button
+                    type="button"
+                    onClick={handleOpenImageModal}
+                    className="flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors shadow-2xs cursor-pointer ml-1"
+                    title="Insert Inline Image (Upload WebP or Link URL)"
+                  >
+                    <ImageIcon className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>Insert Image</span>
                   </button>
                 </div>
               </div>
 
-              <textarea
-                id="post-markdown-editor"
-                rows={18}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Draft in GitHub Flavored Markdown (headings, code blocks, tables, lists, links)..."
-                className="mt-2 w-full rounded-2xl border border-border bg-surface p-4 font-mono text-xs sm:text-sm text-foreground leading-relaxed placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-              />
+              {/* Textarea with Drag & Drop Overlay */}
+              <div className="relative mt-2">
+                {isDraggingOverEditor && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-indigo-500 bg-indigo-50/95 dark:bg-indigo-950/95 backdrop-blur-xs transition-all pointer-events-none">
+                    <UploadCloud className="h-10 w-10 text-indigo-600 dark:text-indigo-400 animate-bounce" />
+                    <p className="mt-2 text-sm font-bold text-indigo-900 dark:text-indigo-100">
+                      Drop image to insert into article body
+                    </p>
+                    <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                      Auto-compressed to WebP &lt;150KB and uploaded to Supabase Storage
+                    </p>
+                  </div>
+                )}
+
+                <textarea
+                  id="post-markdown-editor"
+                  rows={18}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onPaste={handleEditorPaste}
+                  onDrop={handleEditorDrop}
+                  onDragOver={handleEditorDragOver}
+                  onDragLeave={handleEditorDragLeave}
+                  placeholder="Draft in GitHub Flavored Markdown (headings, code blocks, tables, lists, links)... You can paste screenshots or drop images directly into this editor!"
+                  className={`w-full rounded-2xl border bg-surface p-4 font-mono text-xs sm:text-sm text-foreground leading-relaxed placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs transition-colors ${
+                    isDraggingOverEditor ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-border'
+                  }`}
+                />
+
+                <div className="flex flex-wrap items-center justify-between text-[11px] text-foreground-muted px-1 mt-1.5 gap-2">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-indigo-500 shrink-0" />
+                    <span>
+                      Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-surface-subtle font-mono text-[10px] border border-border">Ctrl+V</kbd> to paste images directly from clipboard or drag image files onto the editor.
+                    </span>
+                  </span>
+                  <span>{content.length} characters</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -499,6 +734,32 @@ export const AdminPostEditor: React.FC = () => {
                 onImageUploaded={(url) => setCoverImage(url)}
                 label="Article Cover Artwork (WebP <150KB)"
               />
+            </div>
+
+            {/* Inline Media Library Card */}
+            <div className="rounded-2xl border border-border bg-surface p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  Inline Media & Story Assets
+                </label>
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  WebP Ready
+                </span>
+              </div>
+              <p className="text-[11px] text-foreground-muted leading-relaxed">
+                Need to add screenshots, charts, or diagrams throughout your article? Click below to upload with auto-WebP compression, or paste directly into the editor (<kbd className="px-1 py-0.5 rounded bg-surface-subtle font-mono text-[10px] border border-border">Ctrl+V</kbd>).
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full text-xs font-semibold"
+                onClick={handleOpenImageModal}
+                leftIcon={<ImageIcon className="h-3.5 w-3.5 text-indigo-500" />}
+              >
+                Insert Inline Image...
+              </Button>
             </div>
 
             {/* Tags Manager */}
@@ -791,10 +1052,39 @@ export const AdminPostEditor: React.FC = () => {
 
           {/* Markdown Content */}
           <div className="mt-8 prose dark:prose-invert max-w-none font-serif text-foreground leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || '*No content written yet.*'}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                img: ({ src, alt, ...props }) => (
+                  <span className="block my-8">
+                    <img
+                      src={src}
+                      alt={alt || 'Article visual'}
+                      className="w-full rounded-2xl border border-border shadow-sm object-cover max-h-[550px]"
+                      loading="lazy"
+                      {...props}
+                    />
+                    {alt && alt !== 'image' && alt !== 'Image' && alt !== 'Article visual' && (
+                      <span className="block mt-2.5 text-center text-xs text-foreground-muted italic font-sans">
+                        {alt}
+                      </span>
+                    )}
+                  </span>
+                ),
+              }}
+            >
+              {content || '*No content written yet.*'}
+            </ReactMarkdown>
           </div>
         </div>
       )}
+
+      {/* Inline Image Modal */}
+      <InlineImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        onInsert={handleInsertImageFromModal}
+      />
     </div>
   )
 }

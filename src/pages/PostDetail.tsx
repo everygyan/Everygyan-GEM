@@ -559,12 +559,21 @@ export const PostDetail: React.FC = () => {
                       </div>
                     )
                   },
-                  img: ({ src, alt }) => (
-                    <img
-                      src={src}
-                      alt={alt}
-                      className="my-8 rounded-2xl border border-border w-full max-h-[480px] object-cover"
-                    />
+                  img: ({ src, alt, ...props }) => (
+                    <span className="block my-8">
+                      <img
+                        src={src}
+                        alt={alt || 'Article visual'}
+                        className="w-full rounded-2xl border border-border shadow-sm object-cover max-h-[550px]"
+                        loading="lazy"
+                        {...props}
+                      />
+                      {alt && alt !== 'image' && alt !== 'Image' && alt !== 'Article visual' && (
+                        <span className="block mt-2.5 text-center text-xs text-foreground-muted italic font-sans">
+                          {alt}
+                        </span>
+                      )}
+                    </span>
                   ),
                 }}
               >
