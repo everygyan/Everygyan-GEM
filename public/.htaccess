@@ -13,6 +13,14 @@
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json image/svg+xml
 </IfModule>
 
+# MIME Types
+<IfModule mod_mime.c>
+  AddType image/x-icon .ico
+  AddType image/png .png
+  AddType image/svg+xml .svg
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
 # Production Browser Caching for Hostinger
 <IfModule mod_expires.c>
   ExpiresActive On
@@ -24,7 +32,9 @@
   ExpiresByType image/jpeg "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
   ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/manifest+json "access plus 1 week"
 </IfModule>
 
 # Production Security Headers
@@ -34,6 +44,18 @@
   Header set X-XSS-Protection "1; mode=block"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
+
+# Allow public manifest and robots
+<Files "site.webmanifest">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+</Files>
+<Files "robots.txt">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+</Files>
 
 # Block web access to sensitive project files (lockfiles, env, config)
 <FilesMatch "(^#.*#|\.(bak|config|dist|fla|inc|ini|log|psd|sh|sql|sw[op]|env|lock|json)|~)$">
